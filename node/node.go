@@ -72,6 +72,7 @@ func New(conf *Config) (*Node, error) {
 	// working directory don't affect the node.
 	confCopy := *conf
 	conf = &confCopy
+	log.Warn("Test - Node - New Copy config and datadir")
 	if conf.DataDir != "" {
 		absdatadir, err := filepath.Abs(conf.DataDir)
 		if err != nil {
@@ -79,6 +80,7 @@ func New(conf *Config) (*Node, error) {
 		}
 		conf.DataDir = absdatadir
 	}
+	log.Warn("Test - Node - Config logger")
 	if conf.Logger == nil {
 		conf.Logger = log.New()
 	}
@@ -94,7 +96,7 @@ func New(conf *Config) (*Node, error) {
 	if strings.HasSuffix(conf.Name, ".ipc") {
 		return nil, errors.New(`Config.Name cannot end in ".ipc"`)
 	}
-
+	log.Warn("Test - Node", "node name", conf.Name)
 	node := &Node{
 		config:        conf,
 		inprocHandler: rpc.NewServer(),
@@ -105,13 +107,16 @@ func New(conf *Config) (*Node, error) {
 		databases:     make(map[*closeTrackingDB]struct{}),
 	}
 
+	log.Warn("Test - Node", "Built in RPC Apis", node.rpcAPIs)
 	// Register built-in APIs.
 	node.rpcAPIs = append(node.rpcAPIs, node.apis()...)
 
+	log.Warn("Test - Node - directory lock")
 	// Acquire the instance directory lock.
 	if err := node.openDataDir(); err != nil {
 		return nil, err
 	}
+	log.Warn("Test - Node - check account manager")
 	// Ensure that the AccountManager method works before the node has started. We rely on
 	// this in cmd/geth.
 	am, ephemeralKeystore, err := makeAccountManager(conf)
@@ -121,23 +126,31 @@ func New(conf *Config) (*Node, error) {
 	node.accman = am
 	node.ephemKeystore = ephemeralKeystore
 
+	log.Warn("Test - Node - create node key")
 	// Initialize the p2p server. This creates the node key and discovery databases.
 	node.server.Config.PrivateKey = node.config.NodeKey()
+	log.Warn("Test - Node - configure node", "name", node.config.NodeName())
 	node.server.Config.Name = node.config.NodeName()
 	node.server.Config.Logger = node.log
 	if node.server.Config.StaticNodes == nil {
+		log.Warn("Test - Node - configure static node")
 		node.server.Config.StaticNodes = node.config.StaticNodes()
 	}
 	if node.server.Config.TrustedNodes == nil {
+		log.Warn("Test - Node - configure trusted node")
 		node.server.Config.TrustedNodes = node.config.TrustedNodes()
 	}
 	if node.server.Config.NodeDatabase == "" {
+		log.Warn("Test - Node - configure node database")
 		node.server.Config.NodeDatabase = node.config.NodeDB()
 	}
 
+	log.Warn("Test - Node - configure HTTP server")
 	// Configure RPC servers.
 	node.http = newHTTPServer(node.log, conf.HTTPTimeouts)
+	log.Warn("Test - Node - configure WS server")
 	node.ws = newHTTPServer(node.log, rpc.DefaultHTTPTimeouts)
+	log.Warn("Test - Node - configure IPC server")
 	node.ipc = newIPCServer(node.log, conf.IPCEndpoint())
 
 	return node, nil
@@ -294,18 +307,23 @@ func (n *Node) stopServices(running []Lifecycle) error {
 }
 
 func (n *Node) openDataDir() error {
+	log.Warn("Test - Node - check empty datadir")
 	if n.config.DataDir == "" {
 		return nil // ephemeral
 	}
 
 	instdir := filepath.Join(n.config.DataDir, n.config.name())
+	log.Warn("Test - Node - create all directory required")
 	if err := os.MkdirAll(instdir, 0700); err != nil {
 		return err
 	}
+	log.Warn("Test - Node - Lock the instance directory to prevent concurrent use")
 	// Lock the instance directory to prevent concurrent use by another instance as well as
 	// accidental use of the instance directory as a database.
+
 	release, _, err := fileutil.Flock(filepath.Join(instdir, "LOCK"))
 	if err != nil {
+		log.Warn("Test - Node - Lock", "error", err)
 		return convertFileLockError(err)
 	}
 	n.dirLock = release
@@ -533,7 +551,9 @@ func (n *Node) EventMux() *event.TypeMux {
 // previous can be found) from within the node's instance directory. If the node is
 // ephemeral, a memory database is returned.
 func (n *Node) OpenDatabase(name string, cache, handles int, namespace string) (ethdb.Database, error) {
+	log.Warn("Test - Node - OpenDatabase - mutex lock", "name", name)
 	n.lock.Lock()
+	log.Warn("Test - Node - OpenDatabase - mutex defer unlock", "name", name)
 	defer n.lock.Unlock()
 	if n.state == closedState {
 		return nil, ErrNodeStopped
@@ -542,8 +562,10 @@ func (n *Node) OpenDatabase(name string, cache, handles int, namespace string) (
 	var db ethdb.Database
 	var err error
 	if n.config.DataDir == "" {
+		log.Warn("Test - Node - OpenDatabase - new memory database", "name", name)
 		db = rawdb.NewMemoryDatabase()
 	} else {
+		log.Warn("Test - Node - OpenDatabase - new file database", "name", name)
 		db, err = rawdb.NewLevelDBDatabase(n.ResolvePath(name), cache, handles, namespace)
 	}
 

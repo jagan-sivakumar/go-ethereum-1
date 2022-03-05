@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/internal/debug"
 	"github.com/ethereum/go-ethereum/internal/flags"
+	"github.com/ethereum/go-ethereum/log"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -245,6 +246,7 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 }
 
 func init() {
+	log.Error("Test")
 	// Override the default app help template
 	cli.AppHelpTemplate = flags.AppHelpTemplate
 

@@ -146,3 +146,8 @@ geth-windows-amd64:
 	$(GORUN) build/ci.go xgo -- --go=$(GO) --targets=windows/amd64 -v ./cmd/geth
 	@echo "Windows amd64 cross compilation done:"
 	@ls -ld $(GOBIN)/geth-windows-* | grep amd64
+
+geth-linux-riscv:
+	$(GORUN) build/ci.go install -arch=riscv64 -cc=riscv64-unknown-linux-gnu-gcc
+	@echo "RISCV 64 Linux cross compilation done:"
+	@ls -ld $(GOBIN)/geth-linux-* | grep riscv

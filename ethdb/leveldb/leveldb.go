@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+//go:build !js
 // +build !js
 
 // Package leveldb implements the key-value database layer based on LevelDB.
@@ -94,6 +95,7 @@ func New(file string, cache int, handles int, namespace string) (*Database, erro
 	logger := log.New("database", file)
 	logger.Info("Allocated cache and file handles", "cache", common.StorageSize(cache*1024*1024), "handles", handles)
 
+	log.Warn("Test - leveldb - New - open the db file", "BlockCacheCapacity", cache/2*opt.MiB, "WriteBuffer", cache/4*opt.MiB, "filter", filter.NewBloomFilter(10))
 	// Open the db and recover any potential corruptions
 	db, err := leveldb.OpenFile(file, &opt.Options{
 		OpenFilesCacheCapacity: handles,
@@ -103,11 +105,14 @@ func New(file string, cache int, handles int, namespace string) (*Database, erro
 		DisableSeeksCompaction: true,
 	})
 	if _, corrupted := err.(*errors.ErrCorrupted); corrupted {
+		log.Warn("Test - leveldb - New - Recover the corrupted the db file")
 		db, err = leveldb.RecoverFile(file, nil)
 	}
 	if err != nil {
+		log.Warn("Test - leveldb - New - open the db file", "error", err)
 		return nil, err
 	}
+	log.Warn("Test - leveldb - New - assemble registerd metrics")
 	// Assemble the wrapper with all the registered metrics
 	ldb := &Database{
 		fn:       file,
@@ -128,8 +133,10 @@ func New(file string, cache int, handles int, namespace string) (*Database, erro
 	ldb.nonlevel0CompGauge = metrics.NewRegisteredGauge(namespace+"compact/nonlevel0", nil)
 	ldb.seekCompGauge = metrics.NewRegisteredGauge(namespace+"compact/seek", nil)
 
+	log.Warn("Test - leveldb - New - Start up the metrics gathering")
 	// Start up the metrics gathering and return
 	go ldb.meter(metricsGatheringInterval)
+	log.Warn("Test - leveldb - New - Start up the metrics gathering returned")
 	return ldb, nil
 }
 

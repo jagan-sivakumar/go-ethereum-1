@@ -216,10 +216,12 @@ func NewMemoryDatabaseWithCap(size int) ethdb.Database {
 // NewLevelDBDatabase creates a persistent key-value database without a freezer
 // moving immutable chain segments into cold storage.
 func NewLevelDBDatabase(file string, cache int, handles int, namespace string) (ethdb.Database, error) {
+	log.Warn("Test - database - NewLevelDBDatabase - new file database", "file", file)
 	db, err := leveldb.New(file, cache, handles, namespace)
 	if err != nil {
 		return nil, err
 	}
+	log.Warn("Test - database - NewLevelDBDatabase - return new database")
 	return NewDatabase(db), nil
 }
 

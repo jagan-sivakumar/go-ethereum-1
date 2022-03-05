@@ -224,30 +224,36 @@ Use "ethereum dump 0" to dump the genesis block.`,
 // initGenesis will initialise the given JSON format genesis file and writes it as
 // the zero'd block (i.e. genesis) or will fail hard if it can't succeed.
 func initGenesis(ctx *cli.Context) error {
+	log.Warn("Test - chaincmd - initGenesis - get genesis file path")
 	// Make sure we have a valid genesis JSON
 	genesisPath := ctx.Args().First()
 	if len(genesisPath) == 0 {
 		utils.Fatalf("Must supply path to genesis JSON file")
 	}
+	log.Warn("Test - chaincmd - initGenesis - open genesis file")
 	file, err := os.Open(genesisPath)
 	if err != nil {
 		utils.Fatalf("Failed to read genesis file: %v", err)
 	}
 	defer file.Close()
 
+	log.Warn("Test - chaincmd - initGenesis - decode genesis file")
 	genesis := new(core.Genesis)
 	if err := json.NewDecoder(file).Decode(genesis); err != nil {
 		utils.Fatalf("invalid genesis file: %v", err)
 	}
+	log.Warn("Test - chaincmd - initGenesis - initialise databases")
 	// Open and initialise both full and light databases
 	stack, _ := makeConfigNode(ctx)
 	defer stack.Close()
 
 	for _, name := range []string{"chaindata", "lightchaindata"} {
+		log.Warn("Test - chaincmd - initGenesis - open database", "name", name)
 		chaindb, err := stack.OpenDatabase(name, 0, 0, "")
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
+		log.Warn("Test - chaincmd - initGenesis - setup genesis block", "name", name)
 		_, hash, err := core.SetupGenesisBlock(chaindb, genesis)
 		if err != nil {
 			utils.Fatalf("Failed to write genesis block: %v", err)
