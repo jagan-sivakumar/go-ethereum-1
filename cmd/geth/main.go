@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"runtime"
 	godebug "runtime/debug"
 	"sort"
 	"strconv"
@@ -215,7 +216,6 @@ var (
 )
 
 func init() {
-	fmt.Sprintf("Test init")
 	// Initialize the CLI app and start Geth
 	app.Action = geth
 	app.HideVersion = true // we have a command to print the version
@@ -271,6 +271,7 @@ func init() {
 }
 
 func main() {
+	go PrintMemUsage()
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -317,18 +318,18 @@ func prepare(ctx *cli.Context) {
 		ctx.GlobalSet(utils.CacheFlag.Name, strconv.Itoa(128))
 	}
 	// Cap the cache allowance and tune the garbage collector
-	mem, err := gopsutil.VirtualMemory()
-	if err == nil {
-		if 32<<(^uintptr(0)>>63) == 32 && mem.Total > 2*1024*1024*1024 {
-			log.Warn("Lowering memory allowance on 32bit arch", "available", mem.Total/1024/1024, "addressable", 2*1024)
-			mem.Total = 2 * 1024 * 1024 * 1024
-		}
-		allowance := int(mem.Total / 1024 / 1024 / 3)
-		if cache := ctx.GlobalInt(utils.CacheFlag.Name); cache > allowance {
-			log.Warn("Sanitizing cache to Go's GC limits", "provided", cache, "updated", allowance)
-			ctx.GlobalSet(utils.CacheFlag.Name, strconv.Itoa(allowance))
-		}
-	}
+	// mem, err := gopsutil.VirtualMemory()
+	// if err == nil {
+	// 	if 32<<(^uintptr(0)>>63) == 32 && mem.Total > 2*1024*1024*1024 {
+	// 		log.Warn("Lowering memory allowance on 32bit arch", "available", mem.Total/1024/1024, "addressable", 2*1024)
+	// 		mem.Total = 2 * 1024 * 1024 * 1024
+	// 	}
+	// 	allowance := int(mem.Total / 1024 / 1024 / 3)
+	// 	if cache := ctx.GlobalInt(utils.CacheFlag.Name); cache > allowance {
+	// 		log.Warn("Sanitizing cache to Go's GC limits", "provided", cache, "updated", allowance)
+	// 		ctx.GlobalSet(utils.CacheFlag.Name, strconv.Itoa(allowance))
+	// 	}
+	// }
 	// Ensure Go's GC ignores the database cache for trigger percentage
 	cache := ctx.GlobalInt(utils.CacheFlag.Name)
 	gogc := math.Max(20, math.Min(100, 100/(float64(cache)/1024)))
@@ -493,4 +494,37 @@ func unlockAccounts(ctx *cli.Context, stack *node.Node) {
 	for i, account := range unlocks {
 		unlockAccount(ks, account, i, passwords)
 	}
+}
+
+func PrintMemUsage() {
+	for i := 1; ; i++ {
+		var m runtime.MemStats
+		mem, err := gopsutil.VirtualMemory()
+		if err == nil {
+			fmt.Printf("Total = %v MiB", bToMb(mem.Total))
+			fmt.Printf("\tUsed = %v MiB", bToMb(mem.Used))
+			fmt.Printf("\tFree = %v MiB", bToMb(mem.Free))
+			fmt.Printf("\tUsedPercent = %v", mem.UsedPercent)
+		}
+		runtime.ReadMemStats(&m)
+		// For info on each, see: https://golang.org/pkg/runtime/#MemStats
+		fmt.Printf("\nAlloc = %v MiB", bToMb(m.Alloc))
+		fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
+		fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+		fmt.Printf("\tNumGC = %v", m.NumGC)
+		fmt.Printf("\nHeapAlloc = %v MiB", bToMb(m.HeapAlloc))
+		fmt.Printf("\tHeapSys = %v MiB", bToMb(m.HeapSys))
+		fmt.Printf("\tHeapIdle = %v MiB", bToMb(m.HeapIdle))
+		fmt.Printf("\tHeapInuse = %v MiB", bToMb(m.HeapInuse))
+		fmt.Printf("\tHeapReleased = %v MiB", bToMb(m.HeapReleased))
+		fmt.Printf("\tHeapObjects= %v", m.HeapObjects)
+		fmt.Printf("\nStackInuse = %v MiB", bToMb(m.StackInuse))
+		fmt.Printf("\tStackSys = %v MiB\n", bToMb(m.StackSys))
+
+		time.Sleep(30 * time.Second)
+	}
+}
+
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
 }
