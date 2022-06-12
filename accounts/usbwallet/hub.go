@@ -249,10 +249,10 @@ func (hub *Hub) Subscribe(sink chan<- accounts.WalletEvent) event.Subscription {
 	sub := hub.updateScope.Track(hub.updateFeed.Subscribe(sink))
 
 	// Subscribers require an active notification loop, start it
-	if !hub.updating {
-		hub.updating = true
-		go hub.updater()
-	}
+	// if !hub.updating {
+	// 	hub.updating = true
+	// 	go hub.updater()
+	// }
 	return sub
 }
 

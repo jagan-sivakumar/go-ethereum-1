@@ -204,10 +204,10 @@ func (ks *KeyStore) Subscribe(sink chan<- accounts.WalletEvent) event.Subscripti
 	sub := ks.updateScope.Track(ks.updateFeed.Subscribe(sink))
 
 	// Subscribers require an active notification loop, start it
-	if !ks.updating {
-		ks.updating = true
-		go ks.updater()
-	}
+	// if !ks.updating {
+	// 	ks.updating = true
+	// 	go ks.updater()
+	// }
 	return sub
 }
 
@@ -376,7 +376,7 @@ func (ks *KeyStore) TimedUnlock(a accounts.Account, passphrase string, timeout t
 	}
 	if timeout > 0 {
 		u = &unlocked{Key: key, abort: make(chan struct{})}
-		go ks.expire(a.Address, u, timeout)
+		// go ks.expire(a.Address, u, timeout)
 	} else {
 		u = &unlocked{Key: key}
 	}

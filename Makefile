@@ -150,4 +150,4 @@ geth-windows-amd64:
 geth-linux-riscv:
 	$(GORUN) build/ci.go install -arch=riscv64 -cc=riscv64-unknown-linux-gnu-gcc
 	@echo "RISCV 64 Linux cross compilation done:"
-	@ls -ld $(GOBIN)/geth-linux-* | grep riscv
+	@ls -ld $(GOBIN)/geth

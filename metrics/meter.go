@@ -53,7 +53,7 @@ func NewMeter() Meter {
 	arbiter.meters[m] = struct{}{}
 	if !arbiter.started {
 		arbiter.started = true
-		go arbiter.tick()
+		// go arbiter.tick()
 	}
 	return m
 }
@@ -68,7 +68,7 @@ func NewMeterForced() Meter {
 	arbiter.meters[m] = struct{}{}
 	if !arbiter.started {
 		arbiter.started = true
-		go arbiter.tick()
+		// go arbiter.tick()
 	}
 	return m
 }
