@@ -446,7 +446,9 @@ func (c *Config) AccountConfig() (int, int, string, error) {
 }
 
 func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
+	log.Warn("Test - Config - Inside account manager")
 	scryptN, scryptP, keydir, err := conf.AccountConfig()
+	log.Warn("Test - Config - Account manager - config read successfully", "keydir", keydir)
 	var ephemeral string
 	if keydir == "" {
 		// There is no datadir.
@@ -457,9 +459,12 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+	log.Warn("Test - Config - Account manager - MkdirAll start")
 	if err := os.MkdirAll(keydir, 0700); err != nil {
 		return nil, "", err
 	}
+	log.Warn("Test - Config - Account manager - MkdirAll end")
+
 	// Assemble the account manager and supported backends
 	var backends []accounts.Backend
 	if len(conf.ExternalSigner) > 0 {
@@ -470,6 +475,8 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 			return nil, "", fmt.Errorf("error connecting to external signer: %v", err)
 		}
 	}
+	log.Warn("Test - Config - Account manager - backends", "len(backends)", len(backends))
+
 	if len(backends) == 0 {
 		// For now, we're using EITHER external signer OR local signers.
 		// If/when we implement some form of lockfile for USB and keystore wallets,
@@ -483,19 +490,23 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 			} else {
 				backends = append(backends, ledgerhub)
 			}
+			log.Warn("Test - Config - Account manager - Ledger hub end")
 			// Start a USB hub for Trezor hardware wallets (HID version)
 			if trezorhub, err := usbwallet.NewTrezorHubWithHID(); err != nil {
 				log.Warn(fmt.Sprintf("Failed to start HID Trezor hub, disabling: %v", err))
 			} else {
 				backends = append(backends, trezorhub)
 			}
+			log.Warn("Test - Config - Account manager - HID Trezor hub end")
 			// Start a USB hub for Trezor hardware wallets (WebUSB version)
 			if trezorhub, err := usbwallet.NewTrezorHubWithWebUSB(); err != nil {
 				log.Warn(fmt.Sprintf("Failed to start WebUSB Trezor hub, disabling: %v", err))
 			} else {
 				backends = append(backends, trezorhub)
 			}
+			log.Warn("Test - Config - Account manager - WebUSB Trezor hub end")
 		}
+		log.Warn("Test - Config - Account manager - WebUSB Trezor hub end", "len(conf.SmartCardDaemonPath)", len(conf.SmartCardDaemonPath))
 		if len(conf.SmartCardDaemonPath) > 0 {
 			// Start a smart card hub
 			if schub, err := scwallet.NewHub(conf.SmartCardDaemonPath, scwallet.Scheme, keydir); err != nil {
@@ -505,6 +516,7 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 			}
 		}
 	}
+	log.Warn("Test - Config - Account manager - before return")
 
 	return accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: conf.InsecureUnlockAllowed}, backends...), ephemeral, nil
 }

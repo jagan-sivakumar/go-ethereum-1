@@ -22,6 +22,8 @@ import (
 	"math/big"
 	"reflect"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 var (
@@ -329,6 +331,7 @@ var encoderInterface = reflect.TypeOf(new(Encoder)).Elem()
 // makeWriter creates a writer function for the given type.
 func makeWriter(typ reflect.Type, ts tags) (writer, error) {
 	kind := typ.Kind()
+	// fmt.Printf("Test - makeWriter\n")
 	switch {
 	case typ == rawValueType:
 		return writeRawValue, nil
@@ -381,7 +384,13 @@ func writeBool(val reflect.Value, w *encbuf) error {
 }
 
 func writeBigIntPtr(val reflect.Value, w *encbuf) error {
-	ptr := val.Interface().(*big.Int)
+	fmt.Printf("Test-val-%v\n", val)
+	log.Info("Test - writeBigIntPtr - ", "val", val)
+	ptr, ok := val.Interface().(*big.Int)
+	if !ok {
+		ptr = nil
+	}
+	log.Warn("Test - writeBigIntPtr - ", "ptr", ptr)
 	if ptr == nil {
 		w.str = append(w.str, 0x80)
 		return nil

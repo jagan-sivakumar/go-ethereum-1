@@ -37,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 var (
@@ -83,6 +84,7 @@ type unlocked struct {
 func NewKeyStore(keydir string, scryptN, scryptP int) *KeyStore {
 	keydir, _ = filepath.Abs(keydir)
 	ks := &KeyStore{storage: &keyStorePassphrase{keydir, scryptN, scryptP, false}}
+	log.Warn("Test - KeyStore - NewKeyStore", "ks", ks)
 	ks.init(keydir)
 	return ks
 }
@@ -97,13 +99,19 @@ func NewPlaintextKeyStore(keydir string) *KeyStore {
 }
 
 func (ks *KeyStore) init(keydir string) {
+	log.Warn("Test - KeyStore - init", "keydir", keydir)
+
 	// Lock the mutex since the account cache might call back with events
 	ks.mu.Lock()
 	defer ks.mu.Unlock()
 
+	log.Warn("Test - KeyStore - Lock end")
+
 	// Initialize the set of unlocked keys and the account cache
 	ks.unlocked = make(map[common.Address]*unlocked)
 	ks.cache, ks.changes = newAccountCache(keydir)
+
+	log.Warn("Test - KeyStore - Initialize the set of unlocked keys and the account cache end")
 
 	// TODO: In order for this finalizer to work, there must be no references
 	// to ks. addressCache doesn't keep a reference but unlocked keys do,
@@ -111,12 +119,17 @@ func (ks *KeyStore) init(keydir string) {
 	runtime.SetFinalizer(ks, func(m *KeyStore) {
 		m.cache.close()
 	})
+	log.Warn("Test - KeyStore - SetFinalizer end")
+
 	// Create the initial list of wallets from the cache
 	accs := ks.cache.accounts()
+	log.Warn("Test - KeyStore - Create the initial list of wallets from the cache end")
+
 	ks.wallets = make([]accounts.Wallet, len(accs))
 	for i := 0; i < len(accs); i++ {
 		ks.wallets[i] = &keystoreWallet{account: accs[i], keystore: ks}
 	}
+	log.Warn("Test - KeyStore - init end")
 }
 
 // Wallets implements accounts.Backend, returning all single-key wallets from the
@@ -191,10 +204,10 @@ func (ks *KeyStore) Subscribe(sink chan<- accounts.WalletEvent) event.Subscripti
 	sub := ks.updateScope.Track(ks.updateFeed.Subscribe(sink))
 
 	// Subscribers require an active notification loop, start it
-	if !ks.updating {
-		ks.updating = true
-		go ks.updater()
-	}
+	// if !ks.updating {
+	// 	ks.updating = true
+	// 	go ks.updater()
+	// }
 	return sub
 }
 
@@ -363,7 +376,7 @@ func (ks *KeyStore) TimedUnlock(a accounts.Account, passphrase string, timeout t
 	}
 	if timeout > 0 {
 		u = &unlocked{Key: key, abort: make(chan struct{})}
-		go ks.expire(a.Address, u, timeout)
+		// go ks.expire(a.Address, u, timeout)
 	} else {
 		u = &unlocked{Key: key}
 	}

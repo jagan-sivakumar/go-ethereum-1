@@ -216,6 +216,7 @@ var (
 )
 
 func init() {
+	fmt.Printf("geth init test \n")
 	// Initialize the CLI app and start Geth
 	app.Action = geth
 	app.HideVersion = true // we have a command to print the version
@@ -271,7 +272,8 @@ func init() {
 }
 
 func main() {
-	go PrintMemUsage()
+	fmt.Printf("geth main test \n")
+	// go PrintMemUsage()
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -348,7 +350,7 @@ func prepare(ctx *cli.Context) {
 // It creates a default node based on the command line arguments and runs it in
 // blocking mode, waiting for it to be shut down.
 func geth(ctx *cli.Context) error {
-	log.Info("geth test")
+	fmt.Printf("geth test run")
 	if args := ctx.Args(); len(args) > 0 {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
@@ -501,27 +503,27 @@ func PrintMemUsage() {
 		var m runtime.MemStats
 		mem, err := gopsutil.VirtualMemory()
 		if err == nil {
-			fmt.Printf("Total = %v MiB", bToMb(mem.Total))
-			fmt.Printf("\tUsed = %v MiB", bToMb(mem.Used))
-			fmt.Printf("\tFree = %v MiB", bToMb(mem.Free))
+			fmt.Printf("Total = %v MiB,", bToMb(mem.Total))
+			fmt.Printf("\tUsed = %v MiB,", bToMb(mem.Used))
+			fmt.Printf("\tFree = %v MiB,", bToMb(mem.Free))
 			fmt.Printf("\tUsedPercent = %v", mem.UsedPercent)
 		}
 		runtime.ReadMemStats(&m)
 		// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-		fmt.Printf("\nAlloc = %v MiB", bToMb(m.Alloc))
-		fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
-		fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+		fmt.Printf("\nAlloc = %v MiB,", bToMb(m.Alloc))
+		fmt.Printf("\tTotalAlloc = %v MiB,", bToMb(m.TotalAlloc))
+		fmt.Printf("\tSys = %v MiB,", bToMb(m.Sys))
 		fmt.Printf("\tNumGC = %v", m.NumGC)
-		fmt.Printf("\nHeapAlloc = %v MiB", bToMb(m.HeapAlloc))
-		fmt.Printf("\tHeapSys = %v MiB", bToMb(m.HeapSys))
-		fmt.Printf("\tHeapIdle = %v MiB", bToMb(m.HeapIdle))
-		fmt.Printf("\tHeapInuse = %v MiB", bToMb(m.HeapInuse))
-		fmt.Printf("\tHeapReleased = %v MiB", bToMb(m.HeapReleased))
-		fmt.Printf("\tHeapObjects= %v", m.HeapObjects)
-		fmt.Printf("\nStackInuse = %v MiB", bToMb(m.StackInuse))
+		fmt.Printf("\nHeapAlloc = %v MiB,", bToMb(m.HeapAlloc))
+		fmt.Printf("\tHeapSys = %v MiB,", bToMb(m.HeapSys))
+		fmt.Printf("\tHeapIdle = %v MiB,", bToMb(m.HeapIdle))
+		fmt.Printf("\tHeapInuse = %v MiB,", bToMb(m.HeapInuse))
+		fmt.Printf("\tHeapReleased = %v MiB,", bToMb(m.HeapReleased))
+		fmt.Printf("\tHeapObjects= %v,", m.HeapObjects)
+		fmt.Printf("\nStackInuse = %v MiB,", bToMb(m.StackInuse))
 		fmt.Printf("\tStackSys = %v MiB\n", bToMb(m.StackSys))
 
-		time.Sleep(30 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 }
 
